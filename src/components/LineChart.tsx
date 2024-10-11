@@ -1,8 +1,18 @@
 import React, { useEffect, useRef } from "react";
 import { createChart, ColorType } from "lightweight-charts";
 
+interface DataPoint {
+  time: string;
+  value: number;
+}
+
 interface LineChartProps {
-  data: { time: string; value: number }[];
+  data: {
+    price?: DataPoint[];
+    rsi?: DataPoint[];
+    signal?: DataPoint[];
+    liquidity?: DataPoint[];
+  };
 }
 
 export const LineChart: React.FC<LineChartProps> = ({ data }) => {
@@ -16,23 +26,44 @@ export const LineChart: React.FC<LineChartProps> = ({ data }) => {
           textColor: "white",
         },
         grid: {
-          horzLines: {
-            color: "#333",
-          },
-          vertLines: {
-            color: "#333",
-          },
+          horzLines: { color: "#333" },
+          vertLines: { color: "#333" },
         },
         width: chartContainerRef.current.clientWidth,
         height: chartContainerRef.current.clientHeight,
       });
 
-      const lineSeries = chart.addLineSeries({
-        color: "white",
-        lineWidth: 2,
-      });
+      if (data.price) {
+        const priceSeries = chart.addLineSeries({
+          color: "white",
+          lineWidth: 2,
+        });
+        priceSeries.setData(data.price);
+      }
 
-      lineSeries.setData(data);
+      if (data.rsi) {
+        const rsiSeries = chart.addLineSeries({
+          color: "red",
+          lineWidth: 1,
+        });
+        rsiSeries.setData(data.rsi);
+      }
+
+      if (data.signal) {
+        const signalSeries = chart.addLineSeries({
+          color: "blue",
+          lineWidth: 1,
+        });
+        signalSeries.setData(data.signal);
+      }
+
+      if (data.liquidity) {
+        const liquiditySeries = chart.addLineSeries({
+          color: "green",
+          lineWidth: 1,
+        });
+        liquiditySeries.setData(data.liquidity);
+      }
 
       chart.timeScale().fitContent();
 
