@@ -12,7 +12,7 @@ interface Metric {
 }
 
 interface DataPoint {
-  time: number; // Ensure time is a number
+  time: number;
   value: number;
 }
 
@@ -67,28 +67,19 @@ const Charts: React.FC = () => {
           const chartData: ChartData = {};
 
           data.forEach((row: { data: any; metric_id: string }) => {
-            if (row.metric_id === "tether_ratio_channel") {
-              chartData["rsi"] = row.data.map((item: { t: number; o: { rsi: number; signal: number } }) => ({
-                time: item.t, // Use timestamp in seconds
-                value: item.o.rsi,
-              }));
-              chartData["signal"] = row.data.map(
-                (item: { t: number; o: { rsi: number; signal: number } }) => ({
-                  time: item.t, // Use timestamp in seconds
-                  value: item.o.signal,
-                })
-              );
-            } else if (row.metric_id === "liquidity_account") {
-              chartData["liquidity"] = row.data.map((item: { t: number; v: number }) => ({
-                time: item.t, // Use timestamp in seconds
-                value: item.v,
-              }));
-            } else {
-              chartData["price"] = row.data.map((item: { t: number; v: number }) => ({
-                time: item.t, // Use timestamp in seconds
-                value: item.v,
-              }));
-            }
+            chartData[row.metric_id as keyof ChartData] = row.data.map((item: any) => {
+              if (item.o) {
+                return {
+                  time: item.t,
+                  value: item.o.rsi || item.o.signal,
+                };
+              } else {
+                return {
+                  time: item.t,
+                  value: item.v,
+                };
+              }
+            });
           });
 
           console.log("Processed Chart Data:", chartData);
@@ -124,38 +115,34 @@ const Charts: React.FC = () => {
         height: chartContainerRef.current.clientHeight,
       });
 
-      // Price on the right Y-axis
       const priceSeries = chart.addLineSeries({
         color: "white",
         lineWidth: 2,
-        priceScaleId: "right", // Price on the right
+        priceScaleId: "right",
       });
 
-      // RSI, signal, and liquidity on the left Y-axis
       const rsiSeries = chart.addLineSeries({
         color: "red",
         lineWidth: 1,
-        priceScaleId: "left", // RSI on the left
+        priceScaleId: "left",
       });
 
       const signalSeries = chart.addLineSeries({
         color: "blue",
         lineWidth: 1,
-        priceScaleId: "left", // Signal on the left
+        priceScaleId: "left",
       });
 
       const liquiditySeries = chart.addHistogramSeries({
         color: "green",
-        priceScaleId: "left", // Liquidity on the left
+        priceScaleId: "left",
       });
 
-      // Set data for each series
       priceSeries.setData((chartData.price as LineData[]) || []);
       rsiSeries.setData((chartData.rsi as LineData[]) || []);
       signalSeries.setData((chartData.signal as LineData[]) || []);
       liquiditySeries.setData((chartData.liquidity as HistogramData[]) || []);
 
-      // Synchronize the Y-axis scaling by keeping the scales in sync
       chart.priceScale("right").applyOptions({
         alignLabels: true,
       });
@@ -173,7 +160,6 @@ const Charts: React.FC = () => {
         }
       };
 
-      // Subscribe to time range changes
       timeScale.subscribeVisibleLogicalRangeChange(synchronizeVisibleTimeRange);
 
       window.addEventListener("resize", () => {
