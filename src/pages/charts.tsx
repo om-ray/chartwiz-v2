@@ -67,19 +67,22 @@ const Charts: React.FC = () => {
           const chartData: ChartData = {};
 
           data.forEach((row: { data: any; metric_id: string }) => {
-            chartData[row.metric_id as keyof ChartData] = row.data.map((item: any) => {
-              if (item.o) {
-                return {
-                  time: item.t,
-                  value: item.o.rsi || item.o.signal,
-                };
-              } else {
-                return {
-                  time: item.t,
-                  value: item.v,
-                };
-              }
-            });
+            chartData[row.metric_id as keyof ChartData] = row.data
+              .map((item: any) => {
+                if (item.o) {
+                  const values = Object.entries(item.o).map(([key]) => ({
+                    time: item.t,
+                    value: item.o[key],
+                  }));
+                  return values;
+                } else {
+                  return {
+                    time: item.t,
+                    value: item.v,
+                  };
+                }
+              })
+              .flat();
           });
 
           console.log("Processed Chart Data:", chartData);
